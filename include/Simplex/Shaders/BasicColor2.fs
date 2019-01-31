@@ -3,6 +3,7 @@
 in vec3 Color;
 
 uniform vec3 SolidColor = vec3(-1,-1,-1);
+uniform int Invert = 1;
 
 out vec4 Fragment;
 
@@ -12,8 +13,9 @@ void main()
 	
 	if(SolidColor.r != -1.0 && SolidColor.g != -1.0 && SolidColor.b != -1.0)
 		Fragment = vec4(SolidColor, 1);
-
-	Fragment = vec4(1,1,1,2) - Fragment;
+	
+	if(Invert == 1)
+		Fragment = vec4(1,1,1,2) - Fragment;
 	
 	return;
 }
