@@ -173,6 +173,7 @@ void MyMesh::AddQuad(vector3 a_vBottomLeft, vector3 a_vBottomRight, vector3 a_vT
 	AddVertexPosition(a_vBottomRight);
 	AddVertexPosition(a_vTopRight);
 }
+
 void MyMesh::GenerateCube(float a_fSize, vector3 a_v3Color)
 {
 	if (a_fSize < 0.01f)
@@ -275,9 +276,17 @@ void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions,
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
-	// -------------------------------
+
+	float angle = (PI * 2) / a_nSubdivisions;
+	vector3 centerCircle = vector3(0.0f, -a_fHeight/2.0f, 0.0f);
+	vector3 coneApex = vector3(0.0f, a_fHeight/2.0f, 0.0f);
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 bottomLeft = vector3(a_fRadius * cos(angle * i), -a_fHeight / 2.0f, a_fRadius * sin(angle * i));
+		vector3 bottomRight = vector3(a_fRadius * cos(angle * (i + 1)), -a_fHeight / 2.0f, a_fRadius * sin(angle * (i + 1)));
+		AddTri(bottomLeft, bottomRight, centerCircle); // creates the base
+		AddTri(coneApex, bottomRight, bottomLeft); // creates a non-base face
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -299,9 +308,21 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
-	// -------------------------------
+
+	float angle = (PI * 2) / a_nSubdivisions;
+	vector3 centerBottom = vector3(0.0f, -a_fHeight / 2.0f, 0.0f);
+	vector3 centerTop = vector3(0.0f, a_fHeight / 2.0f, 0.0f);
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 bottomLeft = vector3(a_fRadius * cos(angle * i), -a_fHeight / 2.0f, a_fRadius * sin(angle * i));
+		vector3 bottomRight = vector3(a_fRadius * cos(angle * (i + 1)), -a_fHeight / 2.0f, a_fRadius * sin(angle * (i + 1)));
+		vector3 topLeft = bottomLeft + vector3(0, a_fHeight, 0);
+		vector3 topRight = bottomRight + vector3(0, a_fHeight, 0);
+		AddTri(bottomLeft, bottomRight, centerBottom); // creates bottom base
+		AddTri(centerTop, topRight, topLeft); // creates top base
+		AddQuad(topLeft, topRight, bottomLeft, bottomRight); // creates non-base face (side)
+	}
+
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -329,15 +350,34 @@ void MyMesh::GenerateTube(float a_fOuterRadius, float a_fInnerRadius, float a_fH
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	float angle = (PI * 2) / a_nSubdivisions;
+	vector3 centerBottom = vector3(0.0f, -a_fHeight / 2.0f, 0.0f);
+	vector3 centerTop = vector3(0.0f, a_fHeight / 2.0f, 0.0f);
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 bottomLeftOuter = vector3(a_fOuterRadius * cos(angle * i), -a_fHeight / 2.0f, a_fOuterRadius * sin(angle * i));
+		vector3 bottomRightOuter = vector3(a_fOuterRadius * cos(angle * (i + 1)), -a_fHeight / 2.0f, a_fOuterRadius * sin(angle * (i + 1)));
+
+		vector3 bottomLeftInner = vector3(a_fInnerRadius * cos(angle * i), -a_fHeight / 2.0f, a_fInnerRadius * sin(angle * i));
+		vector3 bottomRightInner = vector3(a_fInnerRadius * cos(angle * (i + 1)), -a_fHeight / 2.0f, a_fInnerRadius * sin(angle * (i + 1)));
+
+		vector3 topLeftOuter = bottomLeftOuter + vector3(0, a_fHeight, 0);
+		vector3 topRightOuter = bottomRightOuter + vector3(0, a_fHeight, 0);
+
+		vector3 topLeftInner = bottomLeftInner + vector3(0, a_fHeight, 0);
+		vector3 topRightInner = bottomRightInner + vector3(0, a_fHeight, 0);
+
+		AddQuad(bottomLeftOuter, bottomRightOuter, bottomLeftInner, bottomRightInner); // creates bottom face of tube
+		AddQuad(topLeftInner, topRightInner, topLeftOuter, topRightOuter); // creates top face of tube
+		AddQuad(topLeftOuter, topRightOuter, bottomLeftOuter, bottomRightOuter); // outside "wall" face of the tube
+		AddQuad(bottomLeftInner, bottomRightInner, topLeftInner, topRightInner); // inside "wall" face of the tube
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
 	CompileOpenGL3X();
 }
-void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSubdivisionsA, int a_nSubdivisionsB, vector3 a_v3Color)
+void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSubdivisionsHeight, int a_nSubdivisionsCircumference, vector3 a_v3Color)
 {
 	if (a_fOuterRadius < 0.01f)
 		a_fOuterRadius = 0.01f;
@@ -348,22 +388,56 @@ void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSu
 	if (a_fInnerRadius > a_fOuterRadius)
 		std::swap(a_fInnerRadius, a_fOuterRadius);
 
-	if (a_nSubdivisionsA < 3)
-		a_nSubdivisionsA = 3;
-	if (a_nSubdivisionsA > 360)
-		a_nSubdivisionsA = 360;
+	if (a_nSubdivisionsHeight < 3)
+		a_nSubdivisionsHeight = 3;
+	if (a_nSubdivisionsHeight > 360)
+		a_nSubdivisionsHeight = 360;
 
-	if (a_nSubdivisionsB < 3)
-		a_nSubdivisionsB = 3;
-	if (a_nSubdivisionsB > 360)
-		a_nSubdivisionsB = 360;
+	if (a_nSubdivisionsCircumference < 3)
+		a_nSubdivisionsCircumference = 3;
+	if (a_nSubdivisionsCircumference > 360)
+		a_nSubdivisionsCircumference = 360;
 
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	float fTubeRadius = (a_fOuterRadius - a_fInnerRadius) / 2.0f; // gets radius of the "tube" part of the torus
+
+	std::vector<std::vector<vector3>> torusPoints; // stores all the points necessary for creating the torus
+
+	// each of these calculates angle per iteration, based on the amount of subdivisions, in order to go in a full circle
+	float angleA = (PI * 2) / a_nSubdivisionsHeight;
+	float angleB = (PI * 2) / a_nSubdivisionsCircumference;
+
+	// loops through and creates all the points that are part of the torus
+	for (int b = 0; b < a_nSubdivisionsCircumference; b++) // loops around the circumference of the torus
+	{
+		torusPoints.push_back(std::vector<vector3>()); // adds a set of points (a circle) per iteration
+		for (int a = 0; a < a_nSubdivisionsHeight; a++)
+		{
+			// creates point on vertical circle
+			torusPoints[b].push_back(
+				vector3(
+					a_fInnerRadius + fTubeRadius + fTubeRadius * cos(angleA * a),
+					fTubeRadius * sin(angleA * a),
+					0
+				)
+			);
+			// rotates it to where it is on the torus
+			torusPoints[b][a] = vector3(glm::rotate(angleB * b, vector3(0, 1.0f, 0)) * vector4(torusPoints[b][a], 0));
+		}
+	}
+
+	// loop creates quads between points on one vertical circle to points on the next vertical circle in the vector of points
+	for (int i = 0; i < a_nSubdivisionsCircumference; i++)
+		for (int j = 0; j < a_nSubdivisionsHeight; j++)
+			AddQuad(
+				torusPoints[i][j],
+				torusPoints[(i + 1) % a_nSubdivisionsCircumference][j],
+				torusPoints[i][(j + 1) % a_nSubdivisionsHeight],
+				torusPoints[(i + 1) % a_nSubdivisionsCircumference][(j + 1) % a_nSubdivisionsHeight]
+			);
+
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -386,8 +460,99 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+
+	float fValue = a_fRadius;
+	float fLength = a_fRadius * 2;
+	//3--2
+	//|  |
+	//0--1
+
+	int nSubPoints = a_nSubdivisions - 1;
+
+	// I based this method on the GenerateCube method in the code above, because it involves making a cube.
+
+	vector3 point0(-fValue, -fValue, fValue); //0
+	vector3 point1(fValue, -fValue, fValue); //1
+	vector3 point2(fValue, fValue, fValue); //2
+	vector3 point3(-fValue, fValue, fValue); //3
+
+	vector3 point4(-fValue, -fValue, -fValue); //4
+	vector3 point5(fValue, -fValue, -fValue); //5
+	vector3 point6(fValue, fValue, -fValue); //6
+	vector3 point7(-fValue, fValue, -fValue); //7
+
+	// the following code creates a cube that is subdivided by a_nSubdivisions on each axis
+	// it essentially creates a_nSubdivisions^2 faces per axis
+
+	//F
+	for (int i = 0; i <= nSubPoints; i++) // x
+		for (int j = 0; j <= nSubPoints; j++) // y
+			AddQuad(
+				point0 + vector3(i * fLength / a_nSubdivisions, j * fLength / a_nSubdivisions, 0),
+				point1 + vector3(-(nSubPoints - i) * fLength / a_nSubdivisions, j * fLength / a_nSubdivisions, 0),
+				point3 + vector3(i * fLength / a_nSubdivisions, -(nSubPoints - j) * fLength / a_nSubdivisions, 0),
+				point2 + vector3(-(nSubPoints - i) * fLength / a_nSubdivisions, -(nSubPoints - j) * fLength / a_nSubdivisions, 0)
+			);
+
+	//B
+	for (int i = 0; i <= nSubPoints; i++) // x
+		for (int j = 0; j <= nSubPoints; j++) // y
+			AddQuad(
+				point5 + vector3(-(nSubPoints - i) * fLength / a_nSubdivisions, j * fLength / a_nSubdivisions, 0),
+				point4 + vector3(i * fLength / a_nSubdivisions, j * fLength / a_nSubdivisions, 0),
+				point6 + vector3(-(nSubPoints - i) * fLength / a_nSubdivisions, -(nSubPoints - j) * fLength / a_nSubdivisions, 0),
+				point7 + vector3(i * fLength / a_nSubdivisions, -(nSubPoints - j) * fLength / a_nSubdivisions, 0)
+			);
+
+	//L
+	for (int i = 0; i <= nSubPoints; i++) // z
+		for (int j = 0; j <= nSubPoints; j++) // y
+			AddQuad(
+				point4 + vector3(0, j * fLength / a_nSubdivisions, i * fLength / a_nSubdivisions),
+				point0 + vector3(0, j * fLength / a_nSubdivisions, -(nSubPoints - i) * fLength / a_nSubdivisions),
+				point7 + vector3(0, -(nSubPoints - j) * fLength / a_nSubdivisions, i * fLength / a_nSubdivisions),
+				point3 + vector3(0, -(nSubPoints - j) * fLength / a_nSubdivisions, -(nSubPoints - i) * fLength / a_nSubdivisions)
+			);
+
+	//R
+	for (int i = 0; i <= nSubPoints; i++) // z
+		for (int j = 0; j <= nSubPoints; j++) // y
+			AddQuad(
+				point1 + vector3(0, j * fLength / a_nSubdivisions, -(nSubPoints - i) * fLength / a_nSubdivisions),
+				point5 + vector3(0, j * fLength / a_nSubdivisions, i * fLength / a_nSubdivisions),
+				point2 + vector3(0, -(nSubPoints - j) * fLength / a_nSubdivisions, -(nSubPoints - i) * fLength / a_nSubdivisions),
+				point6 + vector3(0, -(nSubPoints - j) * fLength / a_nSubdivisions, i * fLength / a_nSubdivisions)
+			);
+
+	//U
+	for (int i = 0; i <= nSubPoints; i++) // x
+		for (int j = 0; j <= nSubPoints; j++) // z
+			AddQuad(
+				point3 + vector3(i * fLength / a_nSubdivisions, 0, -(nSubPoints - j) * fLength / a_nSubdivisions),
+				point2 + vector3(-(nSubPoints - i) * fLength / a_nSubdivisions, 0, -(nSubPoints - j) * fLength / a_nSubdivisions),
+				point7 + vector3(i * fLength / a_nSubdivisions, 0, j * fLength / a_nSubdivisions),
+				point6 + vector3(-(nSubPoints - i) * fLength / a_nSubdivisions, 0, j * fLength / a_nSubdivisions)
+			);
+
+
+	//D
+	for (int i = 0; i <= nSubPoints; i++) // x
+		for (int j = 0; j <= nSubPoints; j++) // z
+			AddQuad(
+				point4 + vector3(i * fLength / a_nSubdivisions, 0, j * fLength / a_nSubdivisions),
+				point5 + vector3(-(nSubPoints - i) * fLength / a_nSubdivisions, 0, j * fLength / a_nSubdivisions),
+				point0 + vector3(i * fLength / a_nSubdivisions, 0, -(nSubPoints - j) * fLength / a_nSubdivisions),
+				point1 + vector3(-(nSubPoints - i) * fLength / a_nSubdivisions, 0, -(nSubPoints - j) * fLength / a_nSubdivisions)
+			);
+
+	
+	// the next for loop takes every point that has been added to m_lVertexPos from the AddQuad method calls, normalizes it,
+	// then multiplies it by the radius. the more subdivisions, the more the resulting "cube" looks like a circle
+	// if the following for loop is removed, this method will produce a cube with subdivisions.
+	// this isn't necessarily the most efficient way, but it works.
+
+	for (int i = 0; i < m_lVertexPos.size(); i++)
+		m_lVertexPos[i] = a_fRadius * glm::normalize(m_lVertexPos[i]);
 	// -------------------------------
 
 	// Adding information about color
