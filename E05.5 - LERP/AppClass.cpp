@@ -2,7 +2,7 @@
 void Application::InitVariables(void)
 {
 	//Change this to your name and email
-	m_sProgrammer = "Alberto Bobadilla - labigm@rit.edu";
+	m_sProgrammer = "Andrew Schwartz - aes7176@rit.edu";
 
 	//Set the position and target of the camera
 	m_pCameraMngr->SetPositionTargetAndUpward(vector3(5.0f,3.0f,15.0f), ZERO_V3, AXIS_Y);
@@ -53,17 +53,23 @@ void Application::Display(void)
 
 	//calculate the current position
 	vector3 v3CurrentPos;
-	
-
-
+	float speed = 0.5f; // reaches a point every two seconds
 
 
 	//your code goes here
-	v3CurrentPos = vector3(0.0f, 0.0f, 0.0f);
+	// v3CurrentPos = vector3(0.0f, 0.0f, 0.0f);
 	//-------------------
-	
 
+	// calculates indexes for points based on the timer, rather than creating an iterator variable
+	// probably slower but less lines of code needed
+	int startIndex = static_cast<int>(fTimer * speed) % m_stopsList.size();
+	int endIndex = (static_cast<int>(fTimer * speed) + 1) % m_stopsList.size();
 
+	// calculates the scalar value based on the time interval between points
+	float fAlpha = (static_cast<int>((fTimer * speed) * 1000) % 1000) / 1000.0f;
+
+	// uses lerp to determine current position of model b/t points
+	v3CurrentPos = glm::lerp(m_stopsList[startIndex], m_stopsList[endIndex], fAlpha);
 	
 	matrix4 m4Model = glm::translate(v3CurrentPos);
 	m_pModel->SetModelMatrix(m4Model);

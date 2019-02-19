@@ -2,7 +2,7 @@
 void Application::InitVariables(void)
 {
 	//Change this to your name and email
-	m_sProgrammer = "Alberto Bobadilla - labigm@rit.edu";
+	m_sProgrammer = "Andrew Schwartz - aes7176@rit.edu";
 	
 	//Set the position and target of the camera
 	//(I'm at [0,0,10], looking at [0,0,0] and up is the positive Y axis)
@@ -62,7 +62,14 @@ void Application::Display(void)
 	/*
 		The following offset will orient the orbits as in the demo, start without it to make your life easier.
 	*/
-	//m4Offset = glm::rotate(IDENTITY_M4, 1.5708f, AXIS_Z);
+	m4Offset = glm::rotate(IDENTITY_M4, 1.5708f, AXIS_Z);
+
+
+	//Get a timer
+	static float fTimer = 0;	//store the new timer
+	static uint uClock = m_pSystem->GenClock(); //generate a new clock for that timer
+	fTimer += m_pSystem->GetDeltaTime(uClock); //get the delta time for that timer
+
 
 	// draw a shapes
 	for (uint i = 0; i < m_uOrbits; ++i)
@@ -71,6 +78,28 @@ void Application::Display(void)
 
 		//calculate the current position
 		vector3 v3CurrentPos = ZERO_V3;
+
+		// calculates points to lerp towards based on the amount of sides per orbit and the angle per point
+		// doesn't have a speed variable, so the spheres each hit a point per second on their orbits
+
+		int sides = i + 3; // calculates the amount of sides that the orbit must have
+
+		// calculates the start angle and end angle based on the timer's current integer second and the next integer second
+		float fStartAngle = static_cast<int>(fTimer) * (2.0f * PI / sides);
+		float fEndAngle = (static_cast<int>(fTimer) + 1) * (2.0f * PI / sides);
+
+		float fSizeValue = 0.95f + 0.5f * i; // calculates the radius of the torus based on the values in the InitVariables method
+
+		// finds start and end positions by multiplying the radius by the cos (for the x) and sin (for the y) of the angles found
+		vector3 v3StartPos = vector3(fSizeValue * cos(fStartAngle), fSizeValue * sin(fStartAngle), 0.0f);
+		vector3 v3EndPos = vector3(fSizeValue * cos(fEndAngle), fSizeValue * sin(fEndAngle), 0.0f);
+
+		// calculates the scalar value based on the time interval between points
+		float fAlpha = (static_cast<int>((fTimer) * 1000) % 1000) / 1000.0f;
+
+		// uses lerp to determine current position of sphere b/t points
+		v3CurrentPos = glm::lerp(v3StartPos, v3EndPos, fAlpha);
+
 		matrix4 m4Model = glm::translate(m4Offset, v3CurrentPos);
 
 		//draw spheres
