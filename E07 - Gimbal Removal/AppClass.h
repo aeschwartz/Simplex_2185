@@ -15,10 +15,10 @@ Date: 2017/05
 class Application
 {
 	matrix4 m_m4Model = IDENTITY_M4;
-	quaternion m_qOrientation;
-	vector3 m_v3Rotation;
+	quaternion m_qOrientation; // orientation
+	vector3 m_v3Rotation; // rotation
 	MyMesh* m_pMesh = nullptr;
-	String m_sProgrammer = "Alberto Bobadilla - labigm@rit.edu";
+	String m_sProgrammer = "Andrew Schwartz - aes7176@rit.edu";
 
 private:
 	static ImGuiObject gui; //GUI object
