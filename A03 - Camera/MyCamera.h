@@ -12,6 +12,15 @@ namespace Simplex
 
 class MyCamera
 {
+	// directional vectors
+	vector3 m_v3Forward = vector3(0.0f, 0.0f, -1.0f);
+	vector3 m_v3Sideways = vector3(1.0f, 0.0f, 0.0f);
+	vector3 m_v3Vertical = vector3(0.0f, 1.0f, 0.0f);
+
+	// original orientation
+	float m_fPitch = 0.0f;
+	quaternion m_qOrientation;
+
 	vector3 m_v3Position = vector3(0.0f, 0.0f, 10.0f); //Where my camera is located
 	vector3 m_v3Target = vector3(0.0f, 0.0f, 0.0f); //What I'm looking at
 	vector3 m_v3Above = vector3(0.0f, 1.0f, 0.0f); //What is above the camera
@@ -230,6 +239,15 @@ public:
 	OUTPUT: ---
 	*/
 	void MoveSideways(float a_fDistance = 0.1f);
+
+	/*
+	USAGE: Rotates the camera view matrix as well as local coordinate system vectors
+	ARGUMENTS:
+	-	float angleX -> rotation around the X axis
+	-	float angleY -> rotation around the Y axis
+	OUTPUT: ---
+	*/
+	void ChangeOrientation(float a_angleX, float a_angleY);
 };
 
 } //namespace Simplex

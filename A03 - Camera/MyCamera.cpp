@@ -125,6 +125,8 @@ void Simplex::MyCamera::SetPositionTargetAndUpward(vector3 a_v3Position, vector3
 
 	m_v3Above = a_v3Position + glm::normalize(a_v3Upward);
 	
+	//m_qOrientation = IDENTITY_QUAT;
+
 	//Calculate the Matrix
 	CalculateProjectionMatrix();
 }
@@ -132,6 +134,8 @@ void Simplex::MyCamera::SetPositionTargetAndUpward(vector3 a_v3Position, vector3
 void Simplex::MyCamera::CalculateViewMatrix(void)
 {
 	//Calculate the look at most of your assignment will be reflected in this method
+
+	m_v3Target = m_v3Forward + m_v3Position;
 	m_m4View = glm::lookAt(m_v3Position, m_v3Target, glm::normalize(m_v3Above - m_v3Position)); //position, target, upward
 }
 
@@ -150,13 +154,47 @@ void Simplex::MyCamera::CalculateProjectionMatrix(void)
 	}
 }
 
+// the following functions multiply the move speed (a_fDistance) by each respective direction vector
+
 void MyCamera::MoveForward(float a_fDistance)
 {
-	//The following is just an example and does not take in account the forward vector (AKA view vector)
-	m_v3Position += vector3(0.0f, 0.0f,-a_fDistance);
-	m_v3Target += vector3(0.0f, 0.0f, -a_fDistance);
-	m_v3Above += vector3(0.0f, 0.0f, -a_fDistance);
+	m_v3Position += m_v3Forward * a_fDistance;
+	m_v3Target += m_v3Forward * a_fDistance;
+	m_v3Above += m_v3Forward * a_fDistance;
 }
 
-void MyCamera::MoveVertical(float a_fDistance){}//Needs to be defined
-void MyCamera::MoveSideways(float a_fDistance){}//Needs to be defined
+void MyCamera::MoveVertical(float a_fDistance)
+{
+	m_v3Position += m_v3Vertical * a_fDistance;
+	m_v3Target += m_v3Vertical * a_fDistance;
+	m_v3Above += m_v3Vertical * a_fDistance;
+}
+
+void MyCamera::MoveSideways(float a_fDistance)
+{
+	m_v3Position += m_v3Sideways * a_fDistance;
+	m_v3Target += m_v3Sideways * a_fDistance;
+	m_v3Above += m_v3Sideways * a_fDistance;
+}
+
+// this function changes the orientation (pitch and yaw) of the camera, as well as the direction vectors
+void MyCamera::ChangeOrientation(float a_angleX, float a_angleY)
+{
+	/*if (abs(m_fPitch + a_angleX) < 90.0f)
+	{
+		m_fPitch += a_angleX;
+		std::cout << m_fPitch << std::endl;
+		m_qOrientation = m_qOrientation * glm::angleAxis(glm::radians(a_angleX), AXIS_X);
+	}
+	m_qOrientation = m_qOrientation * glm::angleAxis(glm::radians(a_angleY), AXIS_Y);*/
+
+	
+	vector3 v3XZForward = glm::angleAxis(glm::radians(a_angleY), AXIS_Y) * m_v3Forward;
+	m_v3Sideways = -glm::normalize(glm::cross(m_v3Vertical, v3XZForward));
+
+	m_qOrientation = m_qOrientation * glm::angleAxis(glm::radians(-a_angleX), m_v3Sideways);
+	m_qOrientation = m_qOrientation * glm::angleAxis(glm::radians(-a_angleY), AXIS_Y);
+
+	m_v3Forward = vector3(0.0f, 0.0f, -1.0f) * m_qOrientation;
+
+}
