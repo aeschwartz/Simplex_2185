@@ -83,10 +83,37 @@ void MyRigidBody::SetModelMatrix(matrix4 a_m4ModelMatrix)
 		return;
 
 	m_m4ToWorld = a_m4ModelMatrix;
-	
+
 	//your code goes here---------------------
-	m_v3MinG = m_v3MinL;
-	m_v3MaxG = m_v3MaxL;
+	// points copied from C17_RigidBodyPt3 for convenience's sake
+	vector3 v3Points[8];
+	v3Points[0] = m_v3MinL;
+	v3Points[1] = vector3(m_v3MaxL.x, m_v3MinL.y, m_v3MinL.z);
+	v3Points[2] = vector3(m_v3MinL.x, m_v3MaxL.y, m_v3MinL.z);
+	v3Points[3] = vector3(m_v3MaxL.x, m_v3MaxL.y, m_v3MinL.z);
+
+	v3Points[4] = vector3(m_v3MinL.x, m_v3MinL.y, m_v3MaxL.z);
+	v3Points[5] = vector3(m_v3MaxL.x, m_v3MinL.y, m_v3MaxL.z);
+	v3Points[6] = vector3(m_v3MinL.x, m_v3MaxL.y, m_v3MaxL.z);
+	v3Points[7] = m_v3MaxL;
+
+	// set points to global space (ie translated/rotated/scaled by model matrix)
+	for (uint i = 0; i < 8; i++)
+		v3Points[i] = vector3(m_m4ToWorld * vector4(v3Points[i], 1.0f));
+
+	// find max and min in global space
+	m_v3MaxG = m_v3MinG = v3Points[0];
+	for (uint i = 1; i < 8; ++i)
+	{
+		if (m_v3MaxG.x < v3Points[i].x) m_v3MaxG.x = v3Points[i].x;
+		else if (m_v3MinG.x > v3Points[i].x) m_v3MinG.x = v3Points[i].x;
+
+		if (m_v3MaxG.y < v3Points[i].y) m_v3MaxG.y = v3Points[i].y;
+		else if (m_v3MinG.y > v3Points[i].y) m_v3MinG.y = v3Points[i].y;
+
+		if (m_v3MaxG.z < v3Points[i].z) m_v3MaxG.z = v3Points[i].z;
+		else if (m_v3MinG.z > v3Points[i].z) m_v3MinG.z = v3Points[i].z;
+	}
 	//----------------------------------------
 
 	//we calculate the distance between min and max vectors
