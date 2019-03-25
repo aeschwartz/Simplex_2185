@@ -278,7 +278,7 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 {
 
 	float fRadiusA, fRadiusB;
-	matrix3 m4Radii, m4AbsRadii;
+	matrix3 m4Rotation, m4AbsRotation;
 
 	matrix3 m4ModelA = matrix3(m_m4ToWorld);
 	matrix3 m4ModelB = matrix3(a_pOther->GetModelMatrix());
@@ -294,7 +294,7 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	// Compute rotation matrix expressing b in a's coordinate frame
 	for (int i = 0; i < 3; i++)
 		for (int j = 0; j < 3; j++)
-			m4Radii[i][j] = glm::dot(v3UnitVectorsA[i], v3UnitVectorsB[j]);
+			m4Rotation[i][j] = glm::dot(v3UnitVectorsA[i], v3UnitVectorsB[j]);
 
 	// Compute translation vector t
 	vector3 t = v3CenterB - v3CenterA;
@@ -306,67 +306,67 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	// their cross product is (near) null (see text for details)
 	for (int i = 0; i < 3; i++)
 		for (int j = 0; j < 3; j++)
-			m4AbsRadii[i][j] = abs(m4Radii[i][j]) + 0.001; //EPSILON;
+			m4AbsRotation[i][j] = abs(m4Rotation[i][j]) + 0.001; //EPSILON;
 
 	// Test axes L = A0, L = A1, L = A2
 	for (int i = 0; i < 3; i++) {
 		fRadiusA = m_v3HalfWidth[i];
-		fRadiusB = v3HalfWidthB[0] * m4AbsRadii[i][0] + v3HalfWidthB[1] * m4AbsRadii[i][1] + v3HalfWidthB[2] * m4AbsRadii[i][2];
+		fRadiusB = v3HalfWidthB[0] * m4AbsRotation[i][0] + v3HalfWidthB[1] * m4AbsRotation[i][1] + v3HalfWidthB[2] * m4AbsRotation[i][2];
 		if (abs(t[i]) > fRadiusA + fRadiusB) return 1;
 	}
 
 	// Test axes L = B0, L = B1, L = B2
 	for (int i = 0; i < 3; i++) {
-		fRadiusA = m_v3HalfWidth[0] * m4AbsRadii[0][i] + m_v3HalfWidth[1] * m4AbsRadii[1][i] + m_v3HalfWidth[2] * m4AbsRadii[2][i];
+		fRadiusA = m_v3HalfWidth[0] * m4AbsRotation[0][i] + m_v3HalfWidth[1] * m4AbsRotation[1][i] + m_v3HalfWidth[2] * m4AbsRotation[2][i];
 		fRadiusB = v3HalfWidthB[i];
-		if (abs(t[0] * m4Radii[0][i] + t[1] * m4Radii[1][i] + t[2] * m4Radii[2][i]) > fRadiusA + fRadiusB) return 1;
+		if (abs(t[0] * m4Rotation[0][i] + t[1] * m4Rotation[1][i] + t[2] * m4Rotation[2][i]) > fRadiusA + fRadiusB) return 1;
 	}
 
 	// Test axis L = A0 x B0
-	fRadiusA = m_v3HalfWidth[1] * m4AbsRadii[2][0] + m_v3HalfWidth[2] * m4AbsRadii[1][0];
-	fRadiusB = v3HalfWidthB[1] * m4AbsRadii[0][2] + v3HalfWidthB[2] * m4AbsRadii[0][1];
-	if (abs(t[2] * m4Radii[1][0] - t[1] * m4Radii[2][0]) > fRadiusA + fRadiusB) return 1;
+	fRadiusA = m_v3HalfWidth[1] * m4AbsRotation[2][0] + m_v3HalfWidth[2] * m4AbsRotation[1][0];
+	fRadiusB = v3HalfWidthB[1] * m4AbsRotation[0][2] + v3HalfWidthB[2] * m4AbsRotation[0][1];
+	if (abs(t[2] * m4Rotation[1][0] - t[1] * m4Rotation[2][0]) > fRadiusA + fRadiusB) return 1;
 
 	// Test axis L = A0 x B1
-	fRadiusA = m_v3HalfWidth[1] * m4AbsRadii[2][1] + m_v3HalfWidth[2] * m4AbsRadii[1][1];
-	fRadiusB = v3HalfWidthB[0] * m4AbsRadii[0][2] + v3HalfWidthB[2] * m4AbsRadii[0][0];
-	if (abs(t[2] * m4Radii[1][1] - t[1] * m4Radii[2][1]) > fRadiusA + fRadiusB) return 1;
+	fRadiusA = m_v3HalfWidth[1] * m4AbsRotation[2][1] + m_v3HalfWidth[2] * m4AbsRotation[1][1];
+	fRadiusB = v3HalfWidthB[0] * m4AbsRotation[0][2] + v3HalfWidthB[2] * m4AbsRotation[0][0];
+	if (abs(t[2] * m4Rotation[1][1] - t[1] * m4Rotation[2][1]) > fRadiusA + fRadiusB) return 1;
 
 	// Test axis L = A0 x B2
-	fRadiusA = m_v3HalfWidth[1] * m4AbsRadii[2][2] + m_v3HalfWidth[2] * m4AbsRadii[1][2];
-	fRadiusB = v3HalfWidthB[0] * m4AbsRadii[0][1] + v3HalfWidthB[1] * m4AbsRadii[0][0];
-	if (abs(t[2] * m4Radii[1][2] - t[1] * m4Radii[2][2]) > fRadiusA + fRadiusB) return 1;
+	fRadiusA = m_v3HalfWidth[1] * m4AbsRotation[2][2] + m_v3HalfWidth[2] * m4AbsRotation[1][2];
+	fRadiusB = v3HalfWidthB[0] * m4AbsRotation[0][1] + v3HalfWidthB[1] * m4AbsRotation[0][0];
+	if (abs(t[2] * m4Rotation[1][2] - t[1] * m4Rotation[2][2]) > fRadiusA + fRadiusB) return 1;
 
 	// Test axis L = A1 x B0
-	fRadiusA = m_v3HalfWidth[0] * m4AbsRadii[2][0] + m_v3HalfWidth[2] * m4AbsRadii[0][0];
-	fRadiusB = v3HalfWidthB[1] * m4AbsRadii[1][2] + v3HalfWidthB[2] * m4AbsRadii[1][1];
+	fRadiusA = m_v3HalfWidth[0] * m4AbsRotation[2][0] + m_v3HalfWidth[2] * m4AbsRotation[0][0];
+	fRadiusB = v3HalfWidthB[1] * m4AbsRotation[1][2] + v3HalfWidthB[2] * m4AbsRotation[1][1];
 
-	if (abs(t[0] * m4Radii[2][0] - t[2] * m4Radii[0][0]) > fRadiusA + fRadiusB) return 1;
+	if (abs(t[0] * m4Rotation[2][0] - t[2] * m4Rotation[0][0]) > fRadiusA + fRadiusB) return 1;
 
 	// Test axis L = A1 x B1
-	fRadiusA = m_v3HalfWidth[0] * m4AbsRadii[2][1] + m_v3HalfWidth[2] * m4AbsRadii[0][1];
-	fRadiusB = v3HalfWidthB[0] * m4AbsRadii[1][2] + v3HalfWidthB[2] * m4AbsRadii[1][0];
-	if (abs(t[0] * m4Radii[2][1] - t[2] * m4Radii[0][1]) > fRadiusA + fRadiusB) return 1;
+	fRadiusA = m_v3HalfWidth[0] * m4AbsRotation[2][1] + m_v3HalfWidth[2] * m4AbsRotation[0][1];
+	fRadiusB = v3HalfWidthB[0] * m4AbsRotation[1][2] + v3HalfWidthB[2] * m4AbsRotation[1][0];
+	if (abs(t[0] * m4Rotation[2][1] - t[2] * m4Rotation[0][1]) > fRadiusA + fRadiusB) return 1;
 
 	// Test axis L = A1 x B2
-	fRadiusA = m_v3HalfWidth[0] * m4AbsRadii[2][2] + m_v3HalfWidth[2] * m4AbsRadii[0][2];
-	fRadiusB = v3HalfWidthB[0] * m4AbsRadii[1][1] + v3HalfWidthB[1] * m4AbsRadii[1][0];
-	if (abs(t[0] * m4Radii[2][2] - t[2] * m4Radii[0][2]) > fRadiusA + fRadiusB) return 1;
+	fRadiusA = m_v3HalfWidth[0] * m4AbsRotation[2][2] + m_v3HalfWidth[2] * m4AbsRotation[0][2];
+	fRadiusB = v3HalfWidthB[0] * m4AbsRotation[1][1] + v3HalfWidthB[1] * m4AbsRotation[1][0];
+	if (abs(t[0] * m4Rotation[2][2] - t[2] * m4Rotation[0][2]) > fRadiusA + fRadiusB) return 1;
 
 	// Test axis L = A2 x B0
-	fRadiusA = m_v3HalfWidth[0] * m4AbsRadii[1][0] + m_v3HalfWidth[1] * m4AbsRadii[0][0];
-	fRadiusB = v3HalfWidthB[1] * m4AbsRadii[2][2] + v3HalfWidthB[2] * m4AbsRadii[2][1];
-	if (abs(t[1] * m4Radii[0][0] - t[0] * m4Radii[1][0]) > fRadiusA + fRadiusB) return 1;
+	fRadiusA = m_v3HalfWidth[0] * m4AbsRotation[1][0] + m_v3HalfWidth[1] * m4AbsRotation[0][0];
+	fRadiusB = v3HalfWidthB[1] * m4AbsRotation[2][2] + v3HalfWidthB[2] * m4AbsRotation[2][1];
+	if (abs(t[1] * m4Rotation[0][0] - t[0] * m4Rotation[1][0]) > fRadiusA + fRadiusB) return 1;
 
 	// Test axis L = A2 x B1
-	fRadiusA = m_v3HalfWidth[0] * m4AbsRadii[1][1] + m_v3HalfWidth[1] * m4AbsRadii[0][1];
-	fRadiusB = v3HalfWidthB[0] * m4AbsRadii[2][2] + v3HalfWidthB[2] * m4AbsRadii[2][0];
-	if (abs(t[1] * m4Radii[0][1] - t[0] * m4Radii[1][1]) > fRadiusA + fRadiusB) return 1;
+	fRadiusA = m_v3HalfWidth[0] * m4AbsRotation[1][1] + m_v3HalfWidth[1] * m4AbsRotation[0][1];
+	fRadiusB = v3HalfWidthB[0] * m4AbsRotation[2][2] + v3HalfWidthB[2] * m4AbsRotation[2][0];
+	if (abs(t[1] * m4Rotation[0][1] - t[0] * m4Rotation[1][1]) > fRadiusA + fRadiusB) return 1;
 
 	// Test axis L = A2 x B2
-	fRadiusA = m_v3HalfWidth[0] * m4AbsRadii[1][2] + m_v3HalfWidth[1] * m4AbsRadii[0][2];
-	fRadiusB = v3HalfWidthB[0] * m4AbsRadii[2][1] + v3HalfWidthB[1] * m4AbsRadii[2][0];
-	if (abs(t[1] * m4Radii[0][2] - t[0] * m4Radii[1][2]) > fRadiusA + fRadiusB) return 1;
+	fRadiusA = m_v3HalfWidth[0] * m4AbsRotation[1][2] + m_v3HalfWidth[1] * m4AbsRotation[0][2];
+	fRadiusB = v3HalfWidthB[0] * m4AbsRotation[2][1] + v3HalfWidthB[1] * m4AbsRotation[2][0];
+	if (abs(t[1] * m4Rotation[0][2] - t[0] * m4Rotation[1][2]) > fRadiusA + fRadiusB) return 1;
 
 
 	//there is no axis test that separates this two objects
