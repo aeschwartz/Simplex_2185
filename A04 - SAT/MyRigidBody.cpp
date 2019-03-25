@@ -276,16 +276,98 @@ void MyRigidBody::AddToRenderList(void)
 
 uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 {
-	/*
-	Your code goes here instead of this comment;
 
-	For this method, if there is an axis that separates the two objects
-	then the return will be different than 0; 1 for any separating axis
-	is ok if you are not going for the extra credit, if you could not
-	find a separating axis you need to return 0, there is an enum in
-	Simplex that might help you [eSATResults] feel free to use it.
-	(eSATResults::SAT_NONE has a value of 0)
-	*/
+	float fRadiusA, fRadiusB;
+	matrix3 m4Radii, m4AbsRadii;
+
+	matrix3 m4ModelA = matrix3(m_m4ToWorld);
+	matrix3 m4ModelB = matrix3(a_pOther->GetModelMatrix());
+
+	vector3 v3UnitVectorsA[] = { m4ModelA * AXIS_X, m4ModelA * AXIS_Y, m4ModelA * AXIS_Z };
+	vector3 v3UnitVectorsB[] = { m4ModelB * AXIS_X, m4ModelB * AXIS_Y, m4ModelB * AXIS_Z };
+	
+	vector3 v3CenterA = GetCenterGlobal();
+	vector3 v3CenterB = a_pOther->GetCenterGlobal();
+
+	vector3 v3HalfWidthB = a_pOther->GetHalfWidth();
+
+	// Compute rotation matrix expressing b in a's coordinate frame
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			m4Radii[i][j] = glm::dot(v3UnitVectorsA[i], v3UnitVectorsB[j]);
+
+	// Compute translation vector t
+	vector3 t = v3CenterB - v3CenterA;
+	// Bring translation into a's coordinate frame
+	t = vector3(glm::dot(t, v3UnitVectorsA[0]), glm::dot(t, v3UnitVectorsA[1]), glm::dot(t, v3UnitVectorsA[2]));
+
+	// Compute common subexpressions. Add in an epsilon term to
+	// counteract arithmetic errors when two edges are parallel and
+	// their cross product is (near) null (see text for details)
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			m4AbsRadii[i][j] = abs(m4Radii[i][j]) + 0.001; //EPSILON;
+
+	// Test axes L = A0, L = A1, L = A2
+	for (int i = 0; i < 3; i++) {
+		fRadiusA = m_v3HalfWidth[i];
+		fRadiusB = v3HalfWidthB[0] * m4AbsRadii[i][0] + v3HalfWidthB[1] * m4AbsRadii[i][1] + v3HalfWidthB[2] * m4AbsRadii[i][2];
+		if (abs(t[i]) > fRadiusA + fRadiusB) return 1;
+	}
+
+	// Test axes L = B0, L = B1, L = B2
+	for (int i = 0; i < 3; i++) {
+		fRadiusA = m_v3HalfWidth[0] * m4AbsRadii[0][i] + m_v3HalfWidth[1] * m4AbsRadii[1][i] + m_v3HalfWidth[2] * m4AbsRadii[2][i];
+		fRadiusB = v3HalfWidthB[i];
+		if (abs(t[0] * m4Radii[0][i] + t[1] * m4Radii[1][i] + t[2] * m4Radii[2][i]) > fRadiusA + fRadiusB) return 1;
+	}
+
+	// Test axis L = A0 x B0
+	fRadiusA = m_v3HalfWidth[1] * m4AbsRadii[2][0] + m_v3HalfWidth[2] * m4AbsRadii[1][0];
+	fRadiusB = v3HalfWidthB[1] * m4AbsRadii[0][2] + v3HalfWidthB[2] * m4AbsRadii[0][1];
+	if (abs(t[2] * m4Radii[1][0] - t[1] * m4Radii[2][0]) > fRadiusA + fRadiusB) return 1;
+
+	// Test axis L = A0 x B1
+	fRadiusA = m_v3HalfWidth[1] * m4AbsRadii[2][1] + m_v3HalfWidth[2] * m4AbsRadii[1][1];
+	fRadiusB = v3HalfWidthB[0] * m4AbsRadii[0][2] + v3HalfWidthB[2] * m4AbsRadii[0][0];
+	if (abs(t[2] * m4Radii[1][1] - t[1] * m4Radii[2][1]) > fRadiusA + fRadiusB) return 1;
+
+	// Test axis L = A0 x B2
+	fRadiusA = m_v3HalfWidth[1] * m4AbsRadii[2][2] + m_v3HalfWidth[2] * m4AbsRadii[1][2];
+	fRadiusB = v3HalfWidthB[0] * m4AbsRadii[0][1] + v3HalfWidthB[1] * m4AbsRadii[0][0];
+	if (abs(t[2] * m4Radii[1][2] - t[1] * m4Radii[2][2]) > fRadiusA + fRadiusB) return 1;
+
+	// Test axis L = A1 x B0
+	fRadiusA = m_v3HalfWidth[0] * m4AbsRadii[2][0] + m_v3HalfWidth[2] * m4AbsRadii[0][0];
+	fRadiusB = v3HalfWidthB[1] * m4AbsRadii[1][2] + v3HalfWidthB[2] * m4AbsRadii[1][1];
+
+	if (abs(t[0] * m4Radii[2][0] - t[2] * m4Radii[0][0]) > fRadiusA + fRadiusB) return 1;
+
+	// Test axis L = A1 x B1
+	fRadiusA = m_v3HalfWidth[0] * m4AbsRadii[2][1] + m_v3HalfWidth[2] * m4AbsRadii[0][1];
+	fRadiusB = v3HalfWidthB[0] * m4AbsRadii[1][2] + v3HalfWidthB[2] * m4AbsRadii[1][0];
+	if (abs(t[0] * m4Radii[2][1] - t[2] * m4Radii[0][1]) > fRadiusA + fRadiusB) return 1;
+
+	// Test axis L = A1 x B2
+	fRadiusA = m_v3HalfWidth[0] * m4AbsRadii[2][2] + m_v3HalfWidth[2] * m4AbsRadii[0][2];
+	fRadiusB = v3HalfWidthB[0] * m4AbsRadii[1][1] + v3HalfWidthB[1] * m4AbsRadii[1][0];
+	if (abs(t[0] * m4Radii[2][2] - t[2] * m4Radii[0][2]) > fRadiusA + fRadiusB) return 1;
+
+	// Test axis L = A2 x B0
+	fRadiusA = m_v3HalfWidth[0] * m4AbsRadii[1][0] + m_v3HalfWidth[1] * m4AbsRadii[0][0];
+	fRadiusB = v3HalfWidthB[1] * m4AbsRadii[2][2] + v3HalfWidthB[2] * m4AbsRadii[2][1];
+	if (abs(t[1] * m4Radii[0][0] - t[0] * m4Radii[1][0]) > fRadiusA + fRadiusB) return 1;
+
+	// Test axis L = A2 x B1
+	fRadiusA = m_v3HalfWidth[0] * m4AbsRadii[1][1] + m_v3HalfWidth[1] * m4AbsRadii[0][1];
+	fRadiusB = v3HalfWidthB[0] * m4AbsRadii[2][2] + v3HalfWidthB[2] * m4AbsRadii[2][0];
+	if (abs(t[1] * m4Radii[0][1] - t[0] * m4Radii[1][1]) > fRadiusA + fRadiusB) return 1;
+
+	// Test axis L = A2 x B2
+	fRadiusA = m_v3HalfWidth[0] * m4AbsRadii[1][2] + m_v3HalfWidth[1] * m4AbsRadii[0][2];
+	fRadiusB = v3HalfWidthB[0] * m4AbsRadii[2][1] + v3HalfWidthB[1] * m4AbsRadii[2][0];
+	if (abs(t[1] * m4Radii[0][2] - t[0] * m4Radii[1][2]) > fRadiusA + fRadiusB) return 1;
+
 
 	//there is no axis test that separates this two objects
 	return eSATResults::SAT_NONE;
