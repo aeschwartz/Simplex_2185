@@ -33,7 +33,7 @@ class MyOctant
 	MyOctant* m_pParent = nullptr;// Will store the parent of current octant
 	MyOctant* m_pChild[8];//Will store the children of the current octant
 
-	std::vector<uint> m_EntityList; //List of Entities under this octant (Index in Entity Manager)
+	std::vector<uint> m_lEntityList; //List of Entities under this octant (Index in Entity Manager)
 
 	MyOctant* m_pRoot = nullptr;//Root octant
 	std::vector<MyOctant*> m_lChild; //list of nodes that contain objects (this will be applied to root only)
@@ -49,25 +49,17 @@ public:
 	*/
 	MyOctant(uint a_nMaxLevel = 2, uint a_nIdealEntityCount = 5);
 	/*
-	USAGE: Constructor
-	ARGUMENTS:
-	- vector3 a_v3Center -> Center of the octant in global space
-	- float a_fSize -> size of each side of the octant volume
-	OUTPUT: class object
-	*/
-	MyOctant(vector3 a_v3Center, float a_fSize);
-	/*
 	USAGE: Copy Constructor
 	ARGUMENTS: class object to copy
 	OUTPUT: class object instance
 	*/
-	MyOctant(MyOctant const& other);
+	MyOctant(MyOctant const& a_pOther);
 	/*
 	USAGE: Copy Assignment Operator
 	ARGUMENTS: class object to copy
 	OUTPUT: ---
 	*/
-	MyOctant& operator=(MyOctant const& other);
+	MyOctant& operator=(MyOctant const& a_pOther);
 	/*
 	USAGE: Destructor
 	ARGUMENTS: ---
@@ -113,6 +105,12 @@ public:
 	OUTPUT: check of the collision
 	*/
 	bool IsColliding(uint a_uRBIndex);
+	/*
+	USAGE: updates the entities in the entitymanager using the octree for collision-checking
+	ARGUMENTS: ---
+	OUTPUT: ---
+	*/
+	void Update();
 	/*
 	USAGE: Displays the MyOctant volume specified by index including the objects underneath
 	ARGUMENTS:
@@ -218,6 +216,15 @@ private:
 	OUTPUT: ---
 	*/
 	void ConstructList(void);
+	/*
+	USAGE: Private Constructor
+	ARGUMENTS:
+	- MyOctant* a_pParent -> parent of this child octant
+	- vector3 a_v3Center -> Center of the octant in global space
+	- float a_fSize -> size of each side of the octant volume
+	OUTPUT: class object
+	*/
+	MyOctant(MyOctant* a_pParent, vector3 a_v3Center, float a_fSize);
 };//class
 
 } //namespace Simplex

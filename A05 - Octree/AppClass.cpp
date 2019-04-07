@@ -29,8 +29,9 @@ void Application::InitVariables(void)
 			m_pEntityMngr->SetModelMatrix(m4Position);
 		}
 	}
-	m_uOctantLevels = 1;
-	m_pEntityMngr->Update();
+	m_uOctantLevels = 2;
+	m_pRoot = new MyOctant(m_uOctantLevels, 5);
+	m_pRoot->Update();
 }
 void Application::Update(void)
 {
@@ -44,7 +45,7 @@ void Application::Update(void)
 	CameraRotation();
 	
 	//Update Entity Manager
-	m_pEntityMngr->Update();
+	m_pRoot->Update();
 
 	//Add objects to render list
 	m_pEntityMngr->AddEntityToRenderList(-1, true);
@@ -55,7 +56,7 @@ void Application::Display(void)
 	ClearScreen();
 
 	//display octree
-	//m_pRoot->Display();
+	m_pRoot->Display(m_uOctantID);
 	
 	// draw a skybox
 	m_pMeshMngr->AddSkyboxToRenderList();
@@ -76,4 +77,7 @@ void Application::Release(void)
 {
 	//release GUI
 	ShutdownGUI();
+
+	//release Octree
+	SafeDelete(m_pRoot);
 }
