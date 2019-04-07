@@ -226,15 +226,10 @@ bool Simplex::MyOctant::IsColliding(uint a_uRBIndex)
 	{
 		bool bCollisionLeaf = false;
 		MyEntity* pCCEntity = m_pEntityMngr->GetEntity(a_uRBIndex);
-		if(a_uRBIndex == 0)
-			m_pMeshMngr->AddWireCubeToRenderList(glm::translate(pCCEntity->GetRigidBody()->GetCenterGlobal()) * glm::scale(pCCEntity->GetRigidBody()->GetHalfWidth() * 2), C_GREEN);
-		if(a_uRBIndex == 5)
-			m_pMeshMngr->AddWireCubeToRenderList(glm::translate(pCCEntity->GetRigidBody()->GetCenterGlobal()) * glm::scale(pCCEntity->GetRigidBody()->GetHalfWidth() * 2), C_ORANGE);
 		for (uint i = 0; i < m_lEntityList.size(); ++i)
 		{
-			MyEntity* pCCOtherEntity = m_pEntityMngr->GetEntity(m_lEntityList[i]);
 			bCollisionLeaf = bCollisionLeaf ||
-				(a_uRBIndex != m_lEntityList[i] && pCCEntity->IsColliding(pCCOtherEntity));
+				(a_uRBIndex != m_lEntityList[i] && pCCEntity->IsColliding(m_pEntityMngr->GetEntity(m_lEntityList[i])));
 		}
 		return bCollisionLeaf;
 	}
