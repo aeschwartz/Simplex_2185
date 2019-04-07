@@ -24,10 +24,6 @@ void Simplex::MyOctant::Init(void)
 	m_v3Max = vector3(0.0f);
 }
 
-void Simplex::MyOctant::ConstructList(void)
-{
-}
-
 void Simplex::MyOctant::Release(void)
 {
 	m_pMeshMngr = nullptr;
@@ -138,7 +134,7 @@ Simplex::MyOctant::MyOctant(MyOctant* a_pParent, vector3 a_v3Center, float a_fSi
 			m_v3Min.y < v3TempMax.y &&
 			m_v3Max.z > v3TempMin.z &&
 			m_v3Min.z < v3TempMax.z)
-			m_lEntityList.push_back(i); // if so add it to the list
+			m_lEntityList.push_back(m_pParent->m_lEntityList[i]); // if so add it to the list
 	}
 }
 
@@ -229,9 +225,17 @@ bool Simplex::MyOctant::IsColliding(uint a_uRBIndex)
 	else // base case, once we get to the leaves
 	{
 		bool bCollisionLeaf = false;
+		MyEntity* pCCEntity = m_pEntityMngr->GetEntity(a_uRBIndex);
+		if(a_uRBIndex == 0)
+			m_pMeshMngr->AddWireCubeToRenderList(glm::translate(pCCEntity->GetRigidBody()->GetCenterGlobal()) * glm::scale(pCCEntity->GetRigidBody()->GetHalfWidth() * 2), C_GREEN);
+		if(a_uRBIndex == 5)
+			m_pMeshMngr->AddWireCubeToRenderList(glm::translate(pCCEntity->GetRigidBody()->GetCenterGlobal()) * glm::scale(pCCEntity->GetRigidBody()->GetHalfWidth() * 2), C_ORANGE);
 		for (uint i = 0; i < m_lEntityList.size(); ++i)
-			bCollisionLeaf = bCollisionLeaf || 
-			(a_uRBIndex != m_lEntityList[i] && m_pEntityMngr->GetEntity(a_uRBIndex)->IsColliding(m_pEntityMngr->GetEntity(m_lEntityList[i])));
+		{
+			MyEntity* pCCOtherEntity = m_pEntityMngr->GetEntity(m_lEntityList[i]);
+			bCollisionLeaf = bCollisionLeaf ||
+				(a_uRBIndex != m_lEntityList[i] && pCCEntity->IsColliding(pCCOtherEntity));
+		}
 		return bCollisionLeaf;
 	}
 }
@@ -265,14 +269,6 @@ void Simplex::MyOctant::Display(vector3 a_v3Color)
 	if (!IsLeaf())
 		for (uint i = 0; i < 8; ++i)
 			m_pChild[i]->Display();
-}
-
-void Simplex::MyOctant::DisplayLeafs(vector3 a_v3Color)
-{
-}
-
-void Simplex::MyOctant::ClearEntityList(void)
-{
 }
 
 void Simplex::MyOctant::Subdivide(void)
@@ -329,23 +325,6 @@ MyOctant * Simplex::MyOctant::GetParent(void)
 }
 
 bool Simplex::MyOctant::IsLeaf(void) { return m_uChildren == 0; }
-
-bool Simplex::MyOctant::ContainsMoreThan(uint a_nEntities)
-{
-	return false;
-}
-
-void Simplex::MyOctant::KillBranches(void)
-{
-}
-
-void Simplex::MyOctant::ConstructTree(uint a_nMaxLevel)
-{
-}
-
-void Simplex::MyOctant::AssignIDtoEntity(void)
-{
-}
 
 uint Simplex::MyOctant::GetOctantCount(void){ return m_uOctantCount; }
 

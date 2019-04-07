@@ -127,19 +127,6 @@ public:
 	*/
 	void Display(vector3 a_v3Color = C_YELLOW);
 	/*
-	USAGE: Displays the non empty leafs in the octree
-	ARGUMENTS:
-	- vector3 a_v3Color = REYELLOW -> Color of the volume to display.
-	OUTPUT: ---
-	*/
-	void DisplayLeafs(vector3 a_v3Color = C_YELLOW);
-	/*
-	USAGE: Clears the Entity list for each node
-	ARGUMENTS: ---
-	OUTPUT: ---
-	*/
-	void ClearEntityList(void);
-	/*
 	USAGE: allocates 8 smaller octants in the child pointers
 	ARGUMENTS: ---
 	OUTPUT: ---
@@ -164,33 +151,6 @@ public:
 	*/
 	bool IsLeaf(void);
 	/*
-	USAGE: Asks the MyOctant if it contains more than this many Bounding Objects
-	ARGUMENTS:
-	- uint a_nEntities -> Number of Entities to query
-	OUTPUT: It contains at least this many Entities
-	*/
-	bool ContainsMoreThan(uint a_nEntities);
-	/*
-	USAGE: Deletes all children and the children of their children (almost sounds apocalyptic)
-	ARGUMENTS: ---
-	OUTPUT: ---
-	*/
-	void KillBranches(void);
-	/*
-	USAGE: Creates a tree using subdivisions, the max number of objects and levels
-	ARGUMENTS: 
-	- uint a_nMaxLevel = 3 -> Sets the maximum level of the tree while constructing it
-	OUTPUT: ---
-	*/
-	void ConstructTree(uint a_nMaxLevel = 3);
-	/*
-	USAGE: Traverse the tree up to the leafs and sets the objects in them to the index
-	ARGUMENTS: ---
-	OUTPUT: ---
-	*/
-	void AssignIDtoEntity(void);
-
-	/*
 	USAGE: Gets the total number of octants in the world
 	ARGUMENTS: ---
 	OUTPUT: ---
@@ -210,12 +170,6 @@ private:
 	OUTPUT: ---
 	*/
 	void Init(void);
-	/*
-	USAGE: creates the list of all leafs that contains objects.
-	ARGUMENTS: ---
-	OUTPUT: ---
-	*/
-	void ConstructList(void);
 	/*
 	USAGE: Private Constructor
 	ARGUMENTS:
