@@ -256,10 +256,14 @@ void Simplex::MyOctant::Display(uint a_nIndex, vector3 a_v3Color)
 	// go back to normal display (display all octants) if index = -1
 	if (a_nIndex == -1)
 		Display(a_v3Color);
-	else if (a_nIndex == 0) //base case
-		m_pMeshMngr->AddWireCubeToRenderList(glm::translate(m_v3Center) * glm::scale(vector3(m_fSize)), a_v3Color);
-	else //recursive case
-		m_pChild[a_nIndex - static_cast<int>(pow(8, m_uLevel - 1)) - 1]->Display((a_nIndex - 1) / 8, a_v3Color);
+	else //recursive-ish case
+	{
+		if (a_nIndex == m_uID)
+			m_pMeshMngr->AddWireCubeToRenderList(glm::translate(m_v3Center) * glm::scale(vector3(m_fSize)), a_v3Color);
+		else
+			for (uint i = 0; i < m_uChildren; i++)
+					m_pChild[i]->Display(a_nIndex);
+	}
 }
 
 void Simplex::MyOctant::Display(vector3 a_v3Color)
